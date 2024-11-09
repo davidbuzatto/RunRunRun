@@ -1,0 +1,6 @@
+Criar animação/escolher assets para personagem e cenário;
+Criar/escolher fundo para a fase;
+Crias obstáculos no cenário;
+Aumentar a velocidade;
+Criar itens para pegar;
+Criar inimigos?
