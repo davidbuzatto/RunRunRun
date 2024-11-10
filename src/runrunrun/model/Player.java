@@ -104,7 +104,7 @@ public class Player {
         
         this.idleAnimation = new FrameByFrameAnimation<>( 
             0.1, 
-            AnimationUtils.newSpriteMapAnimationFrameList( 
+            AnimationUtils.getSpriteMapAnimationFrameList( 
                 playerIdleImage, 
                 4, 64, 64
             )
@@ -112,7 +112,7 @@ public class Player {
         
         this.runningAnimation = new FrameByFrameAnimation<>( 
             0.05, 
-            AnimationUtils.newSpriteMapAnimationFrameList( 
+            AnimationUtils.getSpriteMapAnimationFrameList( 
                 playerRunningImage, 
                 6, 64, 64
             )
@@ -120,7 +120,7 @@ public class Player {
         
         this.jumpingAnimation = new FrameByFrameAnimation<>( 
             0.2, 
-            AnimationUtils.newSpriteMapAnimationFrameList( 
+            AnimationUtils.getSpriteMapAnimationFrameList( 
                 playerJumpingImage, 
                 8, 64, 64
             )
@@ -128,7 +128,7 @@ public class Player {
         
         this.dyingAnimation = new FrameByFrameAnimation<>( 
             0.1, 
-            AnimationUtils.newSpriteMapAnimationFrameList( 
+            AnimationUtils.getSpriteMapAnimationFrameList( 
                 playerDyingImage, 
                 8, 64, 64
             )
