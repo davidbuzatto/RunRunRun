@@ -1,13 +1,16 @@
 package runrunrun.model;
 
+import br.com.davidbuzatto.jsge.animation.AnimationUtils;
 import br.com.davidbuzatto.jsge.animation.frame.FrameByFrameAnimation;
-import br.com.davidbuzatto.jsge.animation.frame.ImageAnimationFrame;
+import br.com.davidbuzatto.jsge.animation.frame.SpriteMapAnimationFrame;
 import br.com.davidbuzatto.jsge.collision.CollisionUtils;
 import br.com.davidbuzatto.jsge.core.engine.EngineFrame;
 import br.com.davidbuzatto.jsge.geom.Rectangle;
+import br.com.davidbuzatto.jsge.image.Image;
+import br.com.davidbuzatto.jsge.image.ImageUtils;
 import br.com.davidbuzatto.jsge.math.Vector2;
+import java.awt.Color;
 import java.awt.Paint;
-import java.util.List;
 import runrunrun.GameWorld;
 
 /**
@@ -35,15 +38,10 @@ public class Player {
     
     private int lastReachedTerrain;
     
-    private List<ImageAnimationFrame> idleFrames;
-    private List<ImageAnimationFrame> runFrames;
-    private List<ImageAnimationFrame> jumpFrames;
-    private List<ImageAnimationFrame> deathFrames;
-    
-    private FrameByFrameAnimation<ImageAnimationFrame> idleAnimation;
-    private FrameByFrameAnimation<ImageAnimationFrame> runAnimation;
-    private FrameByFrameAnimation<ImageAnimationFrame> jumpAnimation;
-    private FrameByFrameAnimation<ImageAnimationFrame> deathAnimation;
+    private FrameByFrameAnimation<SpriteMapAnimationFrame> idleAnimation;
+    private FrameByFrameAnimation<SpriteMapAnimationFrame> runningAnimation;
+    private FrameByFrameAnimation<SpriteMapAnimationFrame> jumpingAnimation;
+    private FrameByFrameAnimation<SpriteMapAnimationFrame> dyingAnimation;
     
     private static enum CollisionType {
         LEFT,
@@ -60,20 +58,12 @@ public class Player {
         DYING;
     }
 
-    public Player( Vector2 pos, Vector2 dim, Paint paint,
-                   List<ImageAnimationFrame> idleFrames, 
-                   List<ImageAnimationFrame> runFrames, 
-                   List<ImageAnimationFrame> jumpFrames, 
-                   List<ImageAnimationFrame> deathFrames ) {
+    public Player( Vector2 pos, Vector2 dim, Paint paint ) {
         
         this.pos = pos;
         this.dim = dim;
         this.vel = new Vector2( MOVE_SPEED, 0 );
         this.paint = paint;
-        this.idleFrames = idleFrames;
-        this.runFrames = runFrames;
-        this.jumpFrames = jumpFrames;
-        this.deathFrames = deathFrames;
         this.state = State.IDLE;
         
         this.cpLeft = new Rectangle( 0, 0, 10, 10 );
@@ -82,10 +72,67 @@ public class Player {
         
         this.remainingJumps = 2;
         
-        this.idleAnimation = new FrameByFrameAnimation<>( 0.1, idleFrames );
-        this.runAnimation = new FrameByFrameAnimation<>( 0.05, runFrames );
-        this.jumpAnimation = new FrameByFrameAnimation<>( 0.2, jumpFrames );
-        this.deathAnimation = new FrameByFrameAnimation<>( 0.1, deathFrames );
+        Image playerIdleImage = ImageUtils.loadImage( "resources/images/playerIdle.png" );
+        Image playerRunningImage = ImageUtils.loadImage( "resources/images/playerRunning.png" );
+        Image playerJumpingImage = ImageUtils.loadImage( "resources/images/playerJumping.png" );
+        Image playerDyingImage = ImageUtils.loadImage( "resources/images/playerDying.png" );
+        
+        Image[] images = new Image[]{
+            playerIdleImage,
+            playerRunningImage,
+            playerJumpingImage,
+            playerDyingImage
+        };
+        
+        Color[] fromColor = new Color[]{
+            new Color( 244, 137, 246 ),
+            new Color( 216, 64, 251 ),
+            new Color( 120, 11, 247 )
+        };
+        
+        Color[] toColor = new Color[]{
+            new Color( 106, 156, 246 ),
+            new Color( 15, 94, 238 ),
+            new Color( 9, 56, 147 )
+        };
+        
+        for ( int i = 0; i < fromColor.length; i++ ) {
+            for ( Image img : images ) {
+                img.colorReplace( fromColor[i], toColor[i] );
+            }
+        }
+        
+        this.idleAnimation = new FrameByFrameAnimation<>( 
+            0.1, 
+            AnimationUtils.newSpriteMapAnimationFrameList( 
+                playerIdleImage, 
+                4, 64, 64
+            )
+        );
+        
+        this.runningAnimation = new FrameByFrameAnimation<>( 
+            0.05, 
+            AnimationUtils.newSpriteMapAnimationFrameList( 
+                playerRunningImage, 
+                6, 64, 64
+            )
+        );
+        
+        this.jumpingAnimation = new FrameByFrameAnimation<>( 
+            0.2, 
+            AnimationUtils.newSpriteMapAnimationFrameList( 
+                playerJumpingImage, 
+                8, 64, 64
+            )
+        );
+        
+        this.dyingAnimation = new FrameByFrameAnimation<>( 
+            0.1, 
+            AnimationUtils.newSpriteMapAnimationFrameList( 
+                playerDyingImage, 
+                8, 64, 64
+            )
+        );
         
     }
     
@@ -120,13 +167,13 @@ public class Player {
                 idleAnimation.update( delta );
                 break;
             case RUNNING:
-                runAnimation.update( delta );
+                runningAnimation.update( delta );
                 break;
             case JUMPING:
-                jumpAnimation.update( delta );
+                jumpingAnimation.update( delta );
                 break;
             case DYING:
-                deathAnimation.update( delta );
+                dyingAnimation.update( delta );
                 break;
         }
         
@@ -142,13 +189,13 @@ public class Player {
                 idleAnimation.getCurrentFrame().draw( e, pos.x, pos.y );
                 break;
             case RUNNING:
-                runAnimation.getCurrentFrame().draw( e, pos.x, pos.y );
+                runningAnimation.getCurrentFrame().draw( e, pos.x, pos.y );
                 break;
             case JUMPING:
-                jumpAnimation.getCurrentFrame().draw( e, pos.x, pos.y );
+                jumpingAnimation.getCurrentFrame().draw( e, pos.x, pos.y );
                 break;
             case DYING:
-                deathAnimation.getCurrentFrame().draw( e, pos.x, pos.y );
+                dyingAnimation.getCurrentFrame().draw( e, pos.x, pos.y );
                 break;
         }
         

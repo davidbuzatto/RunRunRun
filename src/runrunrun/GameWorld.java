@@ -34,48 +34,10 @@ public class GameWorld extends EngineFrame {
     @Override
     public void create() {
         
-        List<ImageAnimationFrame> idleFrames = new ArrayList<>();
-        idleFrames.add( new ImageAnimationFrame( loadImage( "resources/images/playerIdle_00000.png" ) ) );
-        idleFrames.add( new ImageAnimationFrame( loadImage( "resources/images/playerIdle_00001.png" ) ) );
-        idleFrames.add( new ImageAnimationFrame( loadImage( "resources/images/playerIdle_00002.png" ) ) );
-        idleFrames.add( new ImageAnimationFrame( loadImage( "resources/images/playerIdle_00003.png" ) ) );
-        
-        List<ImageAnimationFrame> runFrames = new ArrayList<>();
-        runFrames.add( new ImageAnimationFrame( loadImage( "resources/images/playerRun_00000.png" ) ) );
-        runFrames.add( new ImageAnimationFrame( loadImage( "resources/images/playerRun_00001.png" ) ) );
-        runFrames.add( new ImageAnimationFrame( loadImage( "resources/images/playerRun_00002.png" ) ) );
-        runFrames.add( new ImageAnimationFrame( loadImage( "resources/images/playerRun_00003.png" ) ) );
-        runFrames.add( new ImageAnimationFrame( loadImage( "resources/images/playerRun_00004.png" ) ) );
-        runFrames.add( new ImageAnimationFrame( loadImage( "resources/images/playerRun_00005.png" ) ) );
-        
-        List<ImageAnimationFrame> jumpFrames = new ArrayList<>();
-        jumpFrames.add( new ImageAnimationFrame( loadImage( "resources/images/playerJump_00000.png" ) ) );
-        jumpFrames.add( new ImageAnimationFrame( loadImage( "resources/images/playerJump_00001.png" ) ) );
-        jumpFrames.add( new ImageAnimationFrame( loadImage( "resources/images/playerJump_00002.png" ) ) );
-        jumpFrames.add( new ImageAnimationFrame( loadImage( "resources/images/playerJump_00003.png" ) ) );
-        jumpFrames.add( new ImageAnimationFrame( loadImage( "resources/images/playerJump_00004.png" ) ) );
-        jumpFrames.add( new ImageAnimationFrame( loadImage( "resources/images/playerJump_00005.png" ) ) );
-        jumpFrames.add( new ImageAnimationFrame( loadImage( "resources/images/playerJump_00006.png" ) ) );
-        jumpFrames.add( new ImageAnimationFrame( loadImage( "resources/images/playerJump_00007.png" ) ) );
-        
-        List<ImageAnimationFrame> deathFrames = new ArrayList<>();
-        deathFrames.add( new ImageAnimationFrame( loadImage( "resources/images/playerDeath_00000.png" ) ) );
-        deathFrames.add( new ImageAnimationFrame( loadImage( "resources/images/playerDeath_00001.png" ) ) );
-        deathFrames.add( new ImageAnimationFrame( loadImage( "resources/images/playerDeath_00002.png" ) ) );
-        deathFrames.add( new ImageAnimationFrame( loadImage( "resources/images/playerDeath_00003.png" ) ) );
-        deathFrames.add( new ImageAnimationFrame( loadImage( "resources/images/playerDeath_00004.png" ) ) );
-        deathFrames.add( new ImageAnimationFrame( loadImage( "resources/images/playerDeath_00005.png" ) ) );
-        deathFrames.add( new ImageAnimationFrame( loadImage( "resources/images/playerDeath_00006.png" ) ) );
-        deathFrames.add( new ImageAnimationFrame( loadImage( "resources/images/playerDeath_00007.png" ) ) );
-        
         player = new Player( 
             new Vector2( 50, 50 ), 
             new Vector2( 64, 64 ),
-            BLUE,
-            idleFrames,
-            runFrames,
-            jumpFrames,
-            deathFrames
+            BLUE
         );
         
         end = -1;
