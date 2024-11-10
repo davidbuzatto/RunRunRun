@@ -1,17 +1,17 @@
 package runrunrun;
 
-import br.com.davidbuzatto.jsge.animation.frame.ImageAnimationFrame;
 import br.com.davidbuzatto.jsge.core.Camera2D;
 import br.com.davidbuzatto.jsge.core.engine.EngineFrame;
+import br.com.davidbuzatto.jsge.image.Image;
+import br.com.davidbuzatto.jsge.image.ImageUtils;
 import br.com.davidbuzatto.jsge.math.MathUtils;
 import br.com.davidbuzatto.jsge.math.Vector2;
-import java.util.ArrayList;
-import java.util.List;
+import java.awt.Color;
 import runrunrun.model.Player;
 import runrunrun.model.Terrain;
 
 /**
- * RunRunRun!!!
+ * RunRunRun!
  * 
  * @author Prof. Dr. David Buzatto
  */
@@ -19,7 +19,11 @@ public class GameWorld extends EngineFrame {
     
     private Player player;
     private Terrain[] terrains;
+    private Parallax parallax;
     private Camera2D camera;
+    private Color bgColor;
+    private Color terrainColor;
+    private double terrainY;
     
     public static final double GRAVITY = 20;
     
@@ -27,21 +31,61 @@ public class GameWorld extends EngineFrame {
     private int terrainQuantity;
     private int end;
     
+    private class Parallax {
+        
+        Image[] images = new Image[]{
+            ImageUtils.loadImage( "resources/images/background/1.png" ),
+            ImageUtils.loadImage( "resources/images/background/2.png" ),
+            ImageUtils.loadImage( "resources/images/background/3.png" ),
+            ImageUtils.loadImage( "resources/images/background/4.png" ),
+            ImageUtils.loadImage( "resources/images/background/5.png" ),
+            ImageUtils.loadImage( "resources/images/background/6.png" ),
+            ImageUtils.loadImage( "resources/images/background/7.png" )
+        };
+        
+        double[] vel = { 0.05, 0.1, 0.5, 1, 5, 10, 50 };
+        double[] x = new double[vel.length];
+        
+        void update( double delta ) {
+            for ( int i = 0; i < x.length; i++ ) {
+                x[i] -= vel[i] * delta;
+            }
+        }
+        
+        void draw() {
+            for ( int i = 0; i < images.length; i++ ) {
+                for ( int j = 0; j < 2; j++ ) {
+                    drawImage( images[i], x[i] + j * images[i].getWidth(), getScreenHeight() - images[i].getHeight() );
+                }
+                if ( x[i] <= -getScreenWidth() ) {
+                    x[i] = 0;
+                }
+            }
+        }
+        
+    }
+    
     public GameWorld() {
-        super ( 800, 450, "RunRunRun!", 60, true );
+        super ( 800, 450, "RunRunRun!", 60, false );
     }
     
     @Override
     public void create() {
         
+        terrainY = getScreenHeight() - 100;
+        
         player = new Player( 
-            new Vector2( 50, 50 ), 
+            new Vector2( 50, terrainY - 64 ), 
             new Vector2( 64, 64 ),
             BLUE
         );
         
         end = -1;
-        createTerrains( 10 );
+        terrainColor = new Color( 56, 0, 44 );
+        createTerrains( 10, terrainY );
+        
+        parallax = new Parallax();
+        bgColor = new Color( 127, 126, 196 );
         
         try {
             camera = new Camera2D( 
@@ -51,6 +95,8 @@ public class GameWorld extends EngineFrame {
             );
         } catch ( CloneNotSupportedException exc ) {
         }
+        
+        setWindowIcon( loadImage( "resources/images/icon.png" ));
         
     }
     
@@ -64,10 +110,14 @@ public class GameWorld extends EngineFrame {
         }
         player.resolveCollisionTerrain( terrains );
         
-        if ( lastReachedTerrain != player.getLastReachedTerrain() && lastReachedTerrain > 1 ) {
-            addTerrain();
+        if ( lastReachedTerrain != player.getLastReachedTerrain() && lastReachedTerrain > 5 ) {
+            addTerrain( terrainY );
         }
         lastReachedTerrain = player.getLastReachedTerrain();
+        
+        if ( player.pos.x > getScreenWidth() / 2 && player.state != Player.State.DYING ) {
+            parallax.update( delta );
+        }
         
         updateCamera();
         
@@ -76,35 +126,37 @@ public class GameWorld extends EngineFrame {
     @Override
     public void draw() {
         
-        clearBackground( SKYBLUE );
+        clearBackground( bgColor );
+        parallax.draw();
+        
         beginMode2D( camera );
         
         for ( int i = 0; i < terrainQuantity; i++ ) {
             terrains[i].draw( this );
-        }
+        } 
         
         player.draw( this );
         
         endMode2D();
-        drawFPS( 10, 10 );
+        //drawFPS( 10, 10 );
     
     }
     
-    private void createTerrains( int quantity ) {
+    private void createTerrains( int quantity, double y ) {
         terrains = new Terrain[quantity];
         for ( int i = 0; i < quantity; i++ ) {
-            addTerrain();
+            addTerrain( y );
         }
     }
     
-    private void addTerrain() {
+    private void addTerrain( double y ) {
         
         int x = 0;
-        int y = getScreenHeight() - 150;
         
-        int width = MathUtils.getRandomValue( 20, 40 ) * 10;
+        int width = MathUtils.getRandomValue( 3, 6 ) * 64;
         int height = 200;
-        int gap = MathUtils.getRandomValue( 3, 8 ) * 20;
+        int gap = MathUtils.getRandomValue( 1, 3 ) * 64;
+        //int gap = 0;
         
         end++;
         int pos = end % terrains.length;
@@ -124,7 +176,7 @@ public class GameWorld extends EngineFrame {
         terrains[pos] = new Terrain( 
             new Vector2( x, y ), 
             new Vector2( width, height ), 
-            gap, ORANGE
+            gap, terrainColor
         );
         
         if ( terrainQuantity < terrains.length ) {

@@ -8,6 +8,7 @@ import br.com.davidbuzatto.jsge.core.engine.EngineFrame;
 import br.com.davidbuzatto.jsge.geom.Rectangle;
 import br.com.davidbuzatto.jsge.image.Image;
 import br.com.davidbuzatto.jsge.image.ImageUtils;
+import br.com.davidbuzatto.jsge.math.MathUtils;
 import br.com.davidbuzatto.jsge.math.Vector2;
 import java.awt.Color;
 import java.awt.Paint;
@@ -25,7 +26,7 @@ public class Player {
     public Vector2 vel;
     public Paint paint;
     
-    private State state;
+    public State state;
     private int remainingJumps;
     
     private static final double MOVE_SPEED = 400;
@@ -40,7 +41,9 @@ public class Player {
     
     private FrameByFrameAnimation<SpriteMapAnimationFrame> idleAnimation;
     private FrameByFrameAnimation<SpriteMapAnimationFrame> runningAnimation;
+    private FrameByFrameAnimation<SpriteMapAnimationFrame> runDustAnimation;
     private FrameByFrameAnimation<SpriteMapAnimationFrame> jumpingAnimation;
+    private FrameByFrameAnimation<SpriteMapAnimationFrame> doubleJumpDustAnimation;
     private FrameByFrameAnimation<SpriteMapAnimationFrame> dyingAnimation;
     
     private static enum CollisionType {
@@ -50,7 +53,7 @@ public class Player {
         NONE;
     }
     
-    private static enum State {
+    public static enum State {
         STARTING,
         IDLE,
         RUNNING,
@@ -72,10 +75,12 @@ public class Player {
         
         this.remainingJumps = 2;
         
-        Image playerIdleImage = ImageUtils.loadImage( "resources/images/playerIdle.png" );
-        Image playerRunningImage = ImageUtils.loadImage( "resources/images/playerRunning.png" );
-        Image playerJumpingImage = ImageUtils.loadImage( "resources/images/playerJumping.png" );
-        Image playerDyingImage = ImageUtils.loadImage( "resources/images/playerDying.png" );
+        Image playerIdleImage = ImageUtils.loadImage( "resources/images/sprites/playerIdle.png" );
+        Image playerRunningImage = ImageUtils.loadImage( "resources/images/sprites/playerRunning.png" );
+        Image playerRunDustImage = ImageUtils.loadImage( "resources/images/sprites/playerRunDust.png" );
+        Image playerJumpingImage = ImageUtils.loadImage( "resources/images/sprites/playerJumping.png" );
+        Image playerDoubleJumpDustImage = ImageUtils.loadImage( "resources/images/sprites/playerDoubleJumpDust.png" );
+        Image playerDyingImage = ImageUtils.loadImage( "resources/images/sprites/playerDying.png" );
         
         Image[] images = new Image[]{
             playerIdleImage,
@@ -118,12 +123,29 @@ public class Player {
             )
         );
         
+        this.runDustAnimation = new FrameByFrameAnimation<>( 
+            0.05, 
+            AnimationUtils.getSpriteMapAnimationFrameList( 
+                playerRunDustImage, 
+                6, 64, 64
+            )
+        );
+        
         this.jumpingAnimation = new FrameByFrameAnimation<>( 
             0.2, 
             AnimationUtils.getSpriteMapAnimationFrameList( 
                 playerJumpingImage, 
                 8, 64, 64
             )
+        );
+        
+        this.doubleJumpDustAnimation = new FrameByFrameAnimation<>( 
+            0.02, 
+            AnimationUtils.getSpriteMapAnimationFrameList( 
+                playerDoubleJumpDustImage, 
+                6, 64, 64
+            ),
+            false
         );
         
         this.dyingAnimation = new FrameByFrameAnimation<>( 
@@ -147,7 +169,18 @@ public class Player {
             vel.y = -JUMP_SPEED;
             remainingJumps--;
             state = State.JUMPING;
+            if ( remainingJumps == 1 ) {
+                doubleJumpDustAnimation.reset();
+            }
         }
+        
+        /*if ( MathUtils.getRandomValue( 0, 400 ) > 390 ) {
+            if ( remainingJumps > 0 && ( state == State.RUNNING || state == State.JUMPING ) ) {
+                vel.y = -JUMP_SPEED;
+                remainingJumps--;
+                state = State.JUMPING;
+            }
+        }*/
         
         if ( state == State.RUNNING || state == State.JUMPING ) {
             pos.x += vel.x * delta;
@@ -168,9 +201,13 @@ public class Player {
                 break;
             case RUNNING:
                 runningAnimation.update( delta );
+                runDustAnimation.update( delta );
                 break;
             case JUMPING:
                 jumpingAnimation.update( delta );
+                if ( remainingJumps == 0 ) {
+                    doubleJumpDustAnimation.update( delta );
+                }
                 break;
             case DYING:
                 dyingAnimation.update( delta );
@@ -189,9 +226,13 @@ public class Player {
                 idleAnimation.getCurrentFrame().draw( e, pos.x, pos.y );
                 break;
             case RUNNING:
+                runDustAnimation.getCurrentFrame().draw( e, pos.x, pos.y );
                 runningAnimation.getCurrentFrame().draw( e, pos.x, pos.y );
                 break;
             case JUMPING:
+                if ( remainingJumps == 0 ) {
+                    doubleJumpDustAnimation.getCurrentFrame().draw( e, pos.x, pos.y + 10 );
+                }
                 jumpingAnimation.getCurrentFrame().draw( e, pos.x, pos.y );
                 break;
             case DYING:
