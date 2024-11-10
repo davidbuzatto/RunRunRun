@@ -2,6 +2,7 @@ package runrunrun;
 
 import br.com.davidbuzatto.jsge.core.Camera2D;
 import br.com.davidbuzatto.jsge.core.engine.EngineFrame;
+import br.com.davidbuzatto.jsge.core.utils.ColorUtils;
 import br.com.davidbuzatto.jsge.image.Image;
 import br.com.davidbuzatto.jsge.image.ImageUtils;
 import br.com.davidbuzatto.jsge.math.MathUtils;
@@ -140,6 +141,7 @@ public class GameWorld extends EngineFrame {
     public void draw() {
         
         clearBackground( bgColor );
+        
         parallax.draw();
         
         beginMode2D( camera );
@@ -151,6 +153,18 @@ public class GameWorld extends EngineFrame {
         player.draw( this );
         
         endMode2D();
+        
+        if ( player.state == Player.State.DYING ) {
+            fillRectangle( 0, 0, getScreenWidth(), getScreenHeight(), ColorUtils.fade( BLACK, 0.4 ) );
+            fillRectangle( 0, getScreenHeight() / 2 - 100, getScreenWidth(), 200, ColorUtils.fade( BLACK, 0.6 ) );
+            int fontSize = 60;
+            String text = "YOU DIED!";
+            drawText( text, getScreenWidth() / 2 - measureText( text, fontSize ) / 2, getScreenHeight() / 2 - 30, fontSize, RED );
+            fontSize = 20;
+            text = "Press <ENTER> to play again!";
+            drawText( text, getScreenWidth() / 2 - measureText( text, fontSize ) / 2, getScreenHeight() / 2 + 30, fontSize, RED );
+        }
+        
         //drawFPS( 10, 10 );
     
     }
