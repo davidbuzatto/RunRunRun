@@ -139,16 +139,16 @@ public class Player {
         switch ( state ) {
             case STARTING:
             case IDLE:
-                e.drawImage( idleAnimation.getCurrentFrame().image, pos.x, pos.y );
+                idleAnimation.getCurrentFrame().draw( e, pos.x, pos.y );
                 break;
             case RUNNING:
-                e.drawImage( runAnimation.getCurrentFrame().image, pos.x, pos.y );
+                runAnimation.getCurrentFrame().draw( e, pos.x, pos.y );
                 break;
             case JUMPING:
-                e.drawImage( jumpAnimation.getCurrentFrame().image, pos.x, pos.y );
+                jumpAnimation.getCurrentFrame().draw( e, pos.x, pos.y );
                 break;
             case DYING:
-                e.drawImage( deathAnimation.getCurrentFrame().image, pos.x, pos.y );
+                deathAnimation.getCurrentFrame().draw( e, pos.x, pos.y );
                 break;
         }
         
