@@ -5,7 +5,6 @@ import br.com.davidbuzatto.jsge.geom.Rectangle;
 import br.com.davidbuzatto.jsge.image.Image;
 import br.com.davidbuzatto.jsge.image.ImageUtils;
 import br.com.davidbuzatto.jsge.math.Vector2;
-import java.awt.Color;
 import java.awt.Paint;
 
 /**
@@ -33,23 +32,36 @@ public class Terrain {
     private static final Image tile2 = ImageUtils.loadImage( "resources/images/tiles/tile2.png" );
     private static final Image tile3 = ImageUtils.loadImage( "resources/images/tiles/tile3.png" );
     private static final Image tile4 = ImageUtils.loadImage( "resources/images/tiles/tile4.png" );
+    
+    public Enemy enemy;
 
-    public Terrain( Vector2 pos, Vector2 dim, int gap, Paint paint ) {
+    public Terrain( Vector2 pos, Vector2 dim, int gap, Paint paint, boolean createEnemy ) {
         this.id = idCount++;
         this.pos = pos;
         this.dim = dim;
         this.gap = gap;
         this.paint = paint;
-        bb = new Rectangle( 0, 0, 0, 0 );
-        bb.x = pos.x;
-        bb.y = pos.y;
-        bb.width = dim.x;
-        bb.height = dim.y;
-        columns = (int) dim.x / 64;
-        lines = (int) dim.y / 64;
+        this.bb = new Rectangle( 0, 0, 0, 0 );
+        this.bb.x = pos.x;
+        this.bb.y = pos.y;
+        this.bb.width = dim.x;
+        this.bb.height = dim.y;
+        this.columns = (int) dim.x / 64;
+        this.lines = (int) dim.y / 64;
+        if ( createEnemy ) {
+            this.enemy = new Enemy( 
+                new Vector2( pos.x, pos.y - 64 ),
+                new Vector2( 64, 64 ),
+                EngineFrame.WHITE
+            );
+        }
     }
     
     public void update( double delta ) {
+        if ( enemy != null ) {
+            enemy.update( delta );
+            enemy.resolveTerrainInteraction( this );
+        }
     }
     
     public void draw( EngineFrame e ) {
@@ -78,6 +90,10 @@ public class Terrain {
             }
         }
         
+        if ( enemy != null ) {
+            enemy.draw( e );
+        }
+        
     }
     
     public Rectangle getBB() {
@@ -86,6 +102,10 @@ public class Terrain {
 
     public void makeReached() {
         this.reached = true;
+    }
+    
+    public static void resetIdCount() {
+        idCount = 0;
     }
     
 }

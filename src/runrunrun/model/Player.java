@@ -8,7 +8,6 @@ import br.com.davidbuzatto.jsge.core.engine.EngineFrame;
 import br.com.davidbuzatto.jsge.geom.Rectangle;
 import br.com.davidbuzatto.jsge.image.Image;
 import br.com.davidbuzatto.jsge.image.ImageUtils;
-import br.com.davidbuzatto.jsge.math.MathUtils;
 import br.com.davidbuzatto.jsge.math.Vector2;
 import java.awt.Color;
 import java.awt.Paint;
@@ -75,18 +74,18 @@ public class Player {
         
         this.remainingJumps = 2;
         
-        Image playerIdleImage = ImageUtils.loadImage( "resources/images/sprites/playerIdle.png" );
-        Image playerRunningImage = ImageUtils.loadImage( "resources/images/sprites/playerRunning.png" );
-        Image playerRunDustImage = ImageUtils.loadImage( "resources/images/sprites/playerRunDust.png" );
-        Image playerJumpingImage = ImageUtils.loadImage( "resources/images/sprites/playerJumping.png" );
-        Image playerDoubleJumpDustImage = ImageUtils.loadImage( "resources/images/sprites/playerDoubleJumpDust.png" );
-        Image playerDyingImage = ImageUtils.loadImage( "resources/images/sprites/playerDying.png" );
+        Image idleImage = ImageUtils.loadImage( "resources/images/sprites/playerIdle.png" );
+        Image runningImage = ImageUtils.loadImage( "resources/images/sprites/playerRunning.png" );
+        Image runDustImage = ImageUtils.loadImage( "resources/images/sprites/playerRunDust.png" );
+        Image jumpingImage = ImageUtils.loadImage( "resources/images/sprites/playerJumping.png" );
+        Image doubleJumpDustImage = ImageUtils.loadImage( "resources/images/sprites/playerDoubleJumpDust.png" );
+        Image dyingImage = ImageUtils.loadImage( "resources/images/sprites/playerDying.png" );
         
         Image[] images = new Image[]{
-            playerIdleImage,
-            playerRunningImage,
-            playerJumpingImage,
-            playerDyingImage
+            idleImage,
+            runningImage,
+            jumpingImage,
+            dyingImage
         };
         
         Color[] fromColor = new Color[]{
@@ -110,7 +109,7 @@ public class Player {
         this.idleAnimation = new FrameByFrameAnimation<>( 
             0.1, 
             AnimationUtils.getSpriteMapAnimationFrameList( 
-                playerIdleImage, 
+                idleImage, 
                 4, 64, 64
             )
         );
@@ -118,7 +117,7 @@ public class Player {
         this.runningAnimation = new FrameByFrameAnimation<>( 
             0.05, 
             AnimationUtils.getSpriteMapAnimationFrameList( 
-                playerRunningImage, 
+                runningImage, 
                 6, 64, 64
             )
         );
@@ -126,7 +125,7 @@ public class Player {
         this.runDustAnimation = new FrameByFrameAnimation<>( 
             0.05, 
             AnimationUtils.getSpriteMapAnimationFrameList( 
-                playerRunDustImage, 
+                runDustImage, 
                 6, 64, 64
             )
         );
@@ -134,7 +133,7 @@ public class Player {
         this.jumpingAnimation = new FrameByFrameAnimation<>( 
             0.2, 
             AnimationUtils.getSpriteMapAnimationFrameList( 
-                playerJumpingImage, 
+                jumpingImage, 
                 8, 64, 64
             )
         );
@@ -142,7 +141,7 @@ public class Player {
         this.doubleJumpDustAnimation = new FrameByFrameAnimation<>( 
             0.02, 
             AnimationUtils.getSpriteMapAnimationFrameList( 
-                playerDoubleJumpDustImage, 
+                doubleJumpDustImage, 
                 6, 64, 64
             ),
             false
@@ -151,47 +150,54 @@ public class Player {
         this.dyingAnimation = new FrameByFrameAnimation<>( 
             0.1, 
             AnimationUtils.getSpriteMapAnimationFrameList( 
-                playerDyingImage, 
-                8, 64, 64
-            )
+                dyingImage, 
+                9, 64, 64
+            ),
+            false
         );
         
     }
     
     public void update( double delta, EngineFrame e ) {
         
-        if ( e.isKeyPressed( EngineFrame.KEY_RIGHT ) ) {
-            state = State.RUNNING;
-            vel.x = MOVE_SPEED;
-        }
-        
-        if ( e.isKeyPressed( EngineFrame.KEY_SPACE ) && remainingJumps > 0 && ( state == State.RUNNING || state == State.JUMPING ) ) {
-            vel.y = -JUMP_SPEED;
-            remainingJumps--;
-            state = State.JUMPING;
-            if ( remainingJumps == 1 ) {
-                doubleJumpDustAnimation.reset();
+        if ( state == State.IDLE ) {
+            if ( e.isKeyPressed( EngineFrame.KEY_RIGHT ) ) {
+                state = State.RUNNING;
+                vel.x = MOVE_SPEED;
             }
         }
         
-        /*if ( MathUtils.getRandomValue( 0, 400 ) > 390 ) {
-            if ( remainingJumps > 0 && ( state == State.RUNNING || state == State.JUMPING ) ) {
+        if ( state != State.DYING ) {
+            
+            if ( e.isKeyPressed( EngineFrame.KEY_SPACE ) && remainingJumps > 0 && ( state == State.RUNNING || state == State.JUMPING ) ) {
                 vel.y = -JUMP_SPEED;
                 remainingJumps--;
                 state = State.JUMPING;
+                if ( remainingJumps == 1 ) {
+                    doubleJumpDustAnimation.reset();
+                }
             }
-        }*/
-        
-        if ( state == State.RUNNING || state == State.JUMPING ) {
-            pos.x += vel.x * delta;
-        }
-        
-        pos.y += vel.y * delta;
-        
-        vel.y += GameWorld.GRAVITY;
-        
-        if ( vel.y > MAX_FALL_SPEED ) {
-            vel.y = MAX_FALL_SPEED;
+
+            /*if ( MathUtils.getRandomValue( 0, 400 ) > 390 ) {
+                if ( remainingJumps > 0 && ( state == State.RUNNING || state == State.JUMPING ) ) {
+                    vel.y = -JUMP_SPEED;
+                    remainingJumps--;
+                    state = State.JUMPING;
+                }
+            }*/
+
+            if ( state == State.RUNNING || state == State.JUMPING ) {
+                pos.x += vel.x * delta;
+            }
+
+            pos.y += vel.y * delta;
+
+            vel.y += GameWorld.GRAVITY;
+
+            if ( vel.y > MAX_FALL_SPEED ) {
+                vel.y = MAX_FALL_SPEED;
+            }
+            
         }
         
         switch ( state ) {
@@ -269,15 +275,48 @@ public class Player {
         
     }
     
-    public void resolveCollisionTerrain( Terrain[] terrains ) {
+    private CollisionType checkCollisionEnemy( Enemy e ) {
+        
+        if ( CollisionUtils.checkCollisionRectangles( cpBottom, e.getBB() ) ) {
+            return CollisionType.BOTTOM;
+        } else if ( CollisionUtils.checkCollisionRectangles( cpLeft, e.getBB() ) ) {
+            return CollisionType.LEFT;
+        } else if ( CollisionUtils.checkCollisionRectangles( cpRight, e.getBB() ) ) {
+            return CollisionType.RIGHT;
+        }
+        
+        return CollisionType.NONE;
+        
+    }
+    
+    public void resolveCollisionTerrainsAndEnemies( Terrain[] terrains ) {
         
         for ( Terrain t : terrains ) {
             
             if ( t != null ) {
 
                 if ( lastReachedTerrain < t.id && 
-                     pos.x + dim.x >= t.pos.x ) {
+                    pos.x + dim.x >= t.pos.x ) {
                     lastReachedTerrain = t.id;
+                }
+                
+                if ( t.enemy != null && t.enemy.state == Enemy.State.ACTIVE && state != State.DYING ) {
+                    switch ( checkCollisionEnemy( t.enemy ) ) {
+                        case BOTTOM:
+                            pos.y = t.enemy.pos.y - dim.y;
+                            vel.y = -JUMP_SPEED;
+                            state = State.JUMPING;
+                            remainingJumps = 2;
+                            t.enemy.state = Enemy.State.DYING;
+                            break;
+                        case LEFT:
+                            state = State.DYING;
+                            break;
+                        case RIGHT:
+                            state = State.DYING;
+                            break;
+                    }
+                    updateCPs();
                 }
                 
                 switch ( checkCollisionTerrain( t ) ) {

@@ -73,18 +73,7 @@ public class GameWorld extends EngineFrame {
     public void create() {
         
         terrainY = getScreenHeight() - 100;
-        
-        player = new Player( 
-            new Vector2( 50, terrainY - 64 ), 
-            new Vector2( 64, 64 ),
-            BLUE
-        );
-        
-        end = -1;
-        terrainColor = new Color( 56, 0, 44 );
-        createTerrains( 10, terrainY );
-        
-        parallax = new Parallax();
+        prepare();
         bgColor = new Color( 127, 126, 196 );
         
         try {
@@ -100,18 +89,42 @@ public class GameWorld extends EngineFrame {
         
     }
     
+    private void prepare() {
+        
+        player = new Player( 
+            new Vector2( 50, terrainY - 64 ), 
+            new Vector2( 64, 64 ),
+            BLUE
+        );
+        
+        Terrain.resetIdCount();
+        lastReachedTerrain = 0;
+        end = -1;
+        terrainColor = new Color( 56, 0, 44 );
+        createTerrains( 10, terrainY );
+        
+        parallax = new Parallax();
+        
+    }
+    
     @Override
     public void update( double delta ) {
+        
+        if ( player.state == Player.State.DYING ) {
+            if ( isKeyPressed( KEY_ENTER ) ) {
+                prepare();
+            }
+        }
         
         player.update( delta, this );
         
         for ( int i = 0; i < terrainQuantity; i++ ) {
             terrains[i].update( delta );
         }
-        player.resolveCollisionTerrain( terrains );
+        player.resolveCollisionTerrainsAndEnemies( terrains );
         
         if ( lastReachedTerrain != player.getLastReachedTerrain() && lastReachedTerrain > 5 ) {
-            addTerrain( terrainY );
+            addTerrain( terrainY, true );
         }
         lastReachedTerrain = player.getLastReachedTerrain();
         
@@ -145,11 +158,11 @@ public class GameWorld extends EngineFrame {
     private void createTerrains( int quantity, double y ) {
         terrains = new Terrain[quantity];
         for ( int i = 0; i < quantity; i++ ) {
-            addTerrain( y );
+            addTerrain( y, i != 0 );
         }
     }
     
-    private void addTerrain( double y ) {
+    private void addTerrain( double y, boolean createEnemy ) {
         
         int x = 0;
         
@@ -176,7 +189,7 @@ public class GameWorld extends EngineFrame {
         terrains[pos] = new Terrain( 
             new Vector2( x, y ), 
             new Vector2( width, height ), 
-            gap, terrainColor
+            gap, terrainColor, createEnemy
         );
         
         if ( terrainQuantity < terrains.length ) {

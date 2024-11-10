@@ -1,4 +1,3 @@
-Criar inimigos?
+Criar vida.
 Crias obstáculos no cenário;
-Aumentar a velocidade;
 Criar itens para pegar;
