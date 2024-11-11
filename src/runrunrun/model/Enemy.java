@@ -1,11 +1,11 @@
 package runrunrun.model;
 
+import br.com.davidbuzatto.jsge.animation.AnimationExecutionState;
 import br.com.davidbuzatto.jsge.animation.AnimationUtils;
 import br.com.davidbuzatto.jsge.animation.frame.FrameByFrameAnimation;
 import br.com.davidbuzatto.jsge.animation.frame.SpriteMapAnimationFrame;
 import br.com.davidbuzatto.jsge.collision.CollisionUtils;
 import br.com.davidbuzatto.jsge.core.engine.EngineFrame;
-import br.com.davidbuzatto.jsge.core.utils.ColorUtils;
 import br.com.davidbuzatto.jsge.geom.Rectangle;
 import br.com.davidbuzatto.jsge.image.Image;
 import br.com.davidbuzatto.jsge.image.ImageUtils;
@@ -15,19 +15,19 @@ import java.awt.Paint;
 import runrunrun.GameWorld;
 
 /**
- * Jogador.
+ * Inimigo.
  * 
  * @author Prof. Dr. David Buzatto
  */
 public class Enemy {
     
-    public Vector2 pos;
-    public Vector2 dim;
-    public Vector2 vel;
-    public Paint paint;
+    private Vector2 pos;
+    private Vector2 dim;
+    private Vector2 vel;
+    private Paint paint;
     private Rectangle bb;
     
-    public State state;
+    private State state;
     private boolean lookingRight;
     
     private static final double MOVE_SPEED = 100;
@@ -41,6 +41,11 @@ public class Enemy {
     private FrameByFrameAnimation<SpriteMapAnimationFrame> walkingAnimationLeft;
     private FrameByFrameAnimation<SpriteMapAnimationFrame> dyingAnimationRight;
     private FrameByFrameAnimation<SpriteMapAnimationFrame> dyingAnimationLeft;
+    
+    private static final Image owletWalkingImage = ImageUtils.loadImage( "resources/images/sprites/owletMonsterWalking.png" );
+    private static final Image owletDyingImage = ImageUtils.loadImage( "resources/images/sprites/owletMonsterDying.png" );
+    private static final Image dudeWalkingImage = ImageUtils.loadImage( "resources/images/sprites/dudeMonsterWalking.png" );
+    private static final Image dudeDyingImage = ImageUtils.loadImage( "resources/images/sprites/dudeMonsterDying.png" );
     
     private static enum CollisionType {
         LEFT,
@@ -73,11 +78,11 @@ public class Enemy {
         Image dyingImage;
         
         if ( MathUtils.getRandomValue( 0, 1 ) == 0 ) {
-            walkingImage = ImageUtils.loadImage( "resources/images/sprites/owletMonsterWalking.png" );
-            dyingImage = ImageUtils.loadImage( "resources/images/sprites/owletMonsterDying.png" );
+            walkingImage = owletWalkingImage;
+            dyingImage = owletDyingImage;
         } else {
-            walkingImage = ImageUtils.loadImage( "resources/images/sprites/dudeMonsterWalking.png" );
-            dyingImage = ImageUtils.loadImage( "resources/images/sprites/dudeMonsterDying.png" );
+            walkingImage = dudeWalkingImage;
+            dyingImage = dudeDyingImage;
         }
         
         this.walkingAnimationRight = new FrameByFrameAnimation<>( 
@@ -146,7 +151,7 @@ public class Enemy {
                 break;
         }
         
-        updateCPs();
+        updateCPAndBB();
         
     }
     
@@ -162,9 +167,13 @@ public class Enemy {
                 break;
             case DYING:
                 if ( lookingRight ) {
-                    dyingAnimationRight.getCurrentFrame().draw( e, pos.x, pos.y );
+                    if ( dyingAnimationRight.getState() != AnimationExecutionState.FINISHED ) {
+                        dyingAnimationRight.getCurrentFrame().draw( e, pos.x, pos.y );
+                    }
                 } else {
-                    dyingAnimationLeft.getCurrentFrame().draw( e, pos.x, pos.y );
+                    if ( dyingAnimationLeft.getState() != AnimationExecutionState.FINISHED ) {
+                        dyingAnimationLeft.getCurrentFrame().draw( e, pos.x, pos.y );
+                    }
                 }
                 break;
         }
@@ -176,15 +185,15 @@ public class Enemy {
         
     }
     
-    public void updateCPs() {
+    public void updateCPAndBB() {
         cpLeft.x = pos.x + 15;
         cpLeft.y = pos.y + dim.y / 2 - cpLeft.height / 2;
         cpRight.x = pos.x + dim.x - cpRight.width - 12;
         cpRight.y = pos.y + dim.y / 2 - cpRight.height / 2;
         cpBottom.x = pos.x + dim.x / 2 - cpBottom.width / 2;
         cpBottom.y = pos.y + dim.y - cpBottom.height;
-        this.bb.x = pos.x + 10;
-        this.bb.y = pos.y + 10;
+        bb.x = pos.x + 10;
+        bb.y = pos.y + 10;
     }
     
     private CollisionType checkCollisionTerrain( Terrain t ) {
@@ -205,18 +214,18 @@ public class Enemy {
         
         switch ( checkCollisionTerrain( t ) ) {
             case BOTTOM:
-                pos.y = t.pos.y - dim.y;
+                pos.y = t.getPos().y - dim.y;
                 vel.y = 0;
                 break;
         }
         
-        updateCPs();
+        updateCPAndBB();
         
-        if ( pos.x < t.pos.x ) {
-            pos.x = t.pos.x;
+        if ( pos.x < t.getPos().x ) {
+            pos.x = t.getPos().x;
             lookingRight = true;
-        } else if ( pos.x + dim.x > t.pos.x + t.dim.x ) {
-            pos.x = t.pos.x + t.dim.x - dim.x;
+        } else if ( pos.x + dim.x > t.getPos().x + t.getDim().x ) {
+            pos.x = t.getPos().x + t.getDim().x - dim.x;
             lookingRight = false;
         }
         
@@ -224,6 +233,26 @@ public class Enemy {
 
     public Rectangle getBB() {
         return bb;
+    }
+
+    public Vector2 getPos() {
+        return pos;
+    }
+
+    public Vector2 getDim() {
+        return dim;
+    }
+
+    public Vector2 getVel() {
+        return vel;
+    }
+
+    public State getState() {
+        return state;
+    }
+
+    public void setState( State state ) {
+        this.state = state;
     }
     
 }

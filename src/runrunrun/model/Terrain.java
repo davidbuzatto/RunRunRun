@@ -6,6 +6,7 @@ import br.com.davidbuzatto.jsge.image.Image;
 import br.com.davidbuzatto.jsge.image.ImageUtils;
 import br.com.davidbuzatto.jsge.math.Vector2;
 import java.awt.Paint;
+import runrunrun.GameWorld;
 
 /**
  * Um pedaço de terreno.
@@ -16,13 +17,12 @@ public class Terrain {
     
     private static int idCount = 0;
     
-    public int id;
-    public Vector2 pos;
-    public Vector2 dim;
-    public int gap;
-    public Paint paint;
+    private int id;
+    private Vector2 pos;
+    private Vector2 dim;
+    private int gap;
+    private Paint paint;
     
-    private boolean reached;
     private Rectangle bb;
     private int columns;
     private int lines;
@@ -33,7 +33,7 @@ public class Terrain {
     private static final Image tile3 = ImageUtils.loadImage( "resources/images/tiles/tile3.png" );
     private static final Image tile4 = ImageUtils.loadImage( "resources/images/tiles/tile4.png" );
     
-    public Enemy enemy;
+    private Enemy enemy;
 
     public Terrain( Vector2 pos, Vector2 dim, int gap, Paint paint, boolean createEnemy ) {
         this.id = idCount++;
@@ -48,7 +48,7 @@ public class Terrain {
         this.bb.height = dim.y;
         this.columns = (int) dim.x / 64;
         this.lines = (int) dim.y / 64;
-        if ( createEnemy ) {
+        if ( createEnemy && !GameWorld.TEST ) {
             this.enemy = new Enemy( 
                 new Vector2( pos.x, pos.y - 64 ),
                 new Vector2( 64, 64 ),
@@ -99,13 +99,29 @@ public class Terrain {
     public Rectangle getBB() {
         return bb;
     }
-
-    public void makeReached() {
-        this.reached = true;
-    }
     
     public static void resetIdCount() {
         idCount = 0;
+    }
+
+    public Vector2 getPos() {
+        return pos;
+    }
+
+    public Vector2 getDim() {
+        return dim;
+    }
+
+    public Enemy getEnemy() {
+        return enemy;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public int getGap() {
+        return gap;
     }
     
 }

@@ -18,6 +18,8 @@ import runrunrun.model.Terrain;
  */
 public class GameWorld extends EngineFrame {
     
+    public static final double GRAVITY = 20;
+    
     private Player player;
     private Terrain[] terrains;
     private Parallax parallax;
@@ -26,30 +28,46 @@ public class GameWorld extends EngineFrame {
     private Color terrainColor;
     private double terrainY;
     
-    public static final double GRAVITY = 20;
-    
     private int lastReachedTerrain;
     private int terrainQuantity;
     private int end;
     
+    public static final boolean TEST = false;
+    
     private class Parallax {
         
-        Image[] images = new Image[]{
-            ImageUtils.loadImage( "resources/images/background/1.png" ),
-            ImageUtils.loadImage( "resources/images/background/2.png" ),
-            ImageUtils.loadImage( "resources/images/background/3.png" ),
-            ImageUtils.loadImage( "resources/images/background/4.png" ),
-            ImageUtils.loadImage( "resources/images/background/5.png" ),
-            ImageUtils.loadImage( "resources/images/background/6.png" ),
-            ImageUtils.loadImage( "resources/images/background/7.png" )
-        };
+        Image[] images;
+        double[] runVel;
+        double[] walkVel;
+        double[] x;
+
+        public Parallax() {
+            images = new Image[]{
+                ImageUtils.loadImage( "resources/images/background/1.png" ),
+                ImageUtils.loadImage( "resources/images/background/2.png" ),
+                ImageUtils.loadImage( "resources/images/background/3.png" ),
+                ImageUtils.loadImage( "resources/images/background/4.png" ),
+                ImageUtils.loadImage( "resources/images/background/5.png" ),
+                ImageUtils.loadImage( "resources/images/background/6.png" ),
+                ImageUtils.loadImage( "resources/images/background/7.png" )
+            };
+
+            runVel = new double[]{ 0.05, 0.1, 0.5, 1, 5, 10, 50 };
+            walkVel = new double[runVel.length];
+            for ( int i = 0; i < runVel.length; i++ ) {
+                walkVel[i] = runVel[i]/2;
+            }
+            x = new double[runVel.length];
+            
+        }
         
-        double[] vel = { 0.05, 0.1, 0.5, 1, 5, 10, 50 };
-        double[] x = new double[vel.length];
-        
-        void update( double delta ) {
+        void update( double delta, boolean playerRunning ) {
             for ( int i = 0; i < x.length; i++ ) {
-                x[i] -= vel[i] * delta;
+                if ( playerRunning ) {
+                    x[i] -= runVel[i] * delta;
+                } else {
+                    x[i] -= walkVel[i] * delta;
+                }
             }
         }
         
@@ -74,12 +92,13 @@ public class GameWorld extends EngineFrame {
     public void create() {
         
         terrainY = getScreenHeight() - 100;
-        prepare();
         bgColor = new Color( 127, 126, 196 );
+        
+        prepare();
         
         try {
             camera = new Camera2D( 
-                (Vector2) player.pos.clone(), 
+                (Vector2) player.getPos().clone(), 
                 new Vector2( getScreenWidth() / 2, getScreenHeight() / 2 ), 
                 0, 1
             );
@@ -111,7 +130,11 @@ public class GameWorld extends EngineFrame {
     @Override
     public void update( double delta ) {
         
-        if ( player.state == Player.State.DYING ) {
+        if ( player.getState() == Player.State.IDLE ) {
+            if ( isKeyPressed( KEY_ENTER ) ) {
+                player.start();
+            }
+        } else if ( player.getState() == Player.State.DYING ) {
             if ( isKeyPressed( KEY_ENTER ) ) {
                 prepare();
             }
@@ -129,8 +152,8 @@ public class GameWorld extends EngineFrame {
         }
         lastReachedTerrain = player.getLastReachedTerrain();
         
-        if ( player.pos.x > getScreenWidth() / 2 && player.state != Player.State.DYING ) {
-            parallax.update( delta );
+        if ( player.getPos().x > getScreenWidth() / 2 && player.getState() != Player.State.DYING ) {
+            parallax.update( delta, player.isRunning() );
         }
         
         updateCamera();
@@ -154,7 +177,7 @@ public class GameWorld extends EngineFrame {
         
         endMode2D();
         
-        if ( player.state == Player.State.DYING ) {
+        if ( player.getState() == Player.State.DYING ) {
             fillRectangle( 0, 0, getScreenWidth(), getScreenHeight(), ColorUtils.fade( BLACK, 0.4 ) );
             fillRectangle( 0, getScreenHeight() / 2 - 100, getScreenWidth(), 200, ColorUtils.fade( BLACK, 0.6 ) );
             int fontSize = 60;
@@ -183,7 +206,10 @@ public class GameWorld extends EngineFrame {
         int width = MathUtils.getRandomValue( 3, 6 ) * 64;
         int height = 200;
         int gap = MathUtils.getRandomValue( 1, 3 ) * 64;
-        //int gap = 0;
+        
+        if ( TEST ) {
+            gap = 0;
+        }
         
         end++;
         int pos = end % terrains.length;
@@ -196,7 +222,7 @@ public class GameWorld extends EngineFrame {
             }
             
             Terrain lastTerrain = terrains[prevPos];
-            x += lastTerrain.pos.x + lastTerrain.dim.x + lastTerrain.gap;
+            x += lastTerrain.getPos().x + lastTerrain.getDim().x + lastTerrain.getGap();
             
         }
         
@@ -214,18 +240,18 @@ public class GameWorld extends EngineFrame {
     
     private void updateCamera() {
         
-        if ( player.pos.x <= getScreenWidth() / 2 ) {
+        if ( player.getPos().x <= getScreenWidth() / 2 ) {
             camera.target.x = getScreenWidth() / 2;
         } else {
-            camera.target.x = player.pos.x;
+            camera.target.x = player.getPos().x;
         }
         
-        if ( player.pos.y <= getScreenHeight() / 2 ) {
+        if ( player.getPos().y <= getScreenHeight() / 2 ) {
             camera.target.y = getScreenHeight() / 2;
-        } else if ( player.pos.y > getScreenHeight() / 2 ) {
+        } else if ( player.getPos().y > getScreenHeight() / 2 ) {
             camera.target.y = getScreenHeight() / 2;
         } else {
-            camera.target.y = player.pos.y;
+            camera.target.y = player.getPos().y;
         }
         
     }

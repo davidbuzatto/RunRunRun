@@ -1,10 +1,12 @@
 package runrunrun.model;
 
+import br.com.davidbuzatto.jsge.animation.AnimationExecutionState;
 import br.com.davidbuzatto.jsge.animation.AnimationUtils;
 import br.com.davidbuzatto.jsge.animation.frame.FrameByFrameAnimation;
 import br.com.davidbuzatto.jsge.animation.frame.SpriteMapAnimationFrame;
 import br.com.davidbuzatto.jsge.collision.CollisionUtils;
 import br.com.davidbuzatto.jsge.core.engine.EngineFrame;
+import br.com.davidbuzatto.jsge.core.utils.TraceLogUtils;
 import br.com.davidbuzatto.jsge.geom.Rectangle;
 import br.com.davidbuzatto.jsge.image.Image;
 import br.com.davidbuzatto.jsge.image.ImageUtils;
@@ -20,15 +22,17 @@ import runrunrun.GameWorld;
  */
 public class Player {
     
-    public Vector2 pos;
-    public Vector2 dim;
-    public Vector2 vel;
-    public Paint paint;
+    private Vector2 pos;
+    private Vector2 dim;
+    private Vector2 vel;
+    private Paint paint;
     
-    public State state;
+    private State state;
+    private boolean running;
     private int remainingJumps;
     
-    private static final double MOVE_SPEED = 400;
+    private static final double RUN_SPEED = 400;
+    private static final double WALK_SPEED = 200;
     private static final double JUMP_SPEED = 400;
     private static final double MAX_FALL_SPEED = 400;
     
@@ -40,10 +44,12 @@ public class Player {
     
     private FrameByFrameAnimation<SpriteMapAnimationFrame> idleAnimation;
     private FrameByFrameAnimation<SpriteMapAnimationFrame> runningAnimation;
+    private FrameByFrameAnimation<SpriteMapAnimationFrame> walkingAnimation;
     private FrameByFrameAnimation<SpriteMapAnimationFrame> runDustAnimation;
     private FrameByFrameAnimation<SpriteMapAnimationFrame> jumpingAnimation;
     private FrameByFrameAnimation<SpriteMapAnimationFrame> doubleJumpDustAnimation;
     private FrameByFrameAnimation<SpriteMapAnimationFrame> dyingAnimation;
+    private FrameByFrameAnimation<SpriteMapAnimationFrame> throwingAnimation;
     
     private static enum CollisionType {
         LEFT,
@@ -55,7 +61,7 @@ public class Player {
     public static enum State {
         STARTING,
         IDLE,
-        RUNNING,
+        MOVING,
         JUMPING,
         DYING;
     }
@@ -64,7 +70,7 @@ public class Player {
         
         this.pos = pos;
         this.dim = dim;
-        this.vel = new Vector2( MOVE_SPEED, 0 );
+        this.vel = new Vector2( RUN_SPEED, 0 );
         this.paint = paint;
         this.state = State.IDLE;
         
@@ -76,16 +82,20 @@ public class Player {
         
         Image idleImage = ImageUtils.loadImage( "resources/images/sprites/playerIdle.png" );
         Image runningImage = ImageUtils.loadImage( "resources/images/sprites/playerRunning.png" );
+        Image walkingImage = ImageUtils.loadImage( "resources/images/sprites/playerWalking.png" );
         Image runDustImage = ImageUtils.loadImage( "resources/images/sprites/playerRunDust.png" );
         Image jumpingImage = ImageUtils.loadImage( "resources/images/sprites/playerJumping.png" );
         Image doubleJumpDustImage = ImageUtils.loadImage( "resources/images/sprites/playerDoubleJumpDust.png" );
         Image dyingImage = ImageUtils.loadImage( "resources/images/sprites/playerDying.png" );
+        Image throwingImage = ImageUtils.loadImage( "resources/images/sprites/playerThrowing.png" );
         
         Image[] images = new Image[]{
             idleImage,
             runningImage,
+            walkingImage,
             jumpingImage,
-            dyingImage
+            dyingImage,
+            throwingImage
         };
         
         Color[] fromColor = new Color[]{
@@ -122,6 +132,14 @@ public class Player {
             )
         );
         
+        this.walkingAnimation = new FrameByFrameAnimation<>( 
+            0.1, 
+            AnimationUtils.getSpriteMapAnimationFrameList( 
+                walkingImage, 
+                6, 64, 64
+            )
+        );
+        
         this.runDustAnimation = new FrameByFrameAnimation<>( 
             0.05, 
             AnimationUtils.getSpriteMapAnimationFrameList( 
@@ -142,7 +160,7 @@ public class Player {
             0.02, 
             AnimationUtils.getSpriteMapAnimationFrameList( 
                 doubleJumpDustImage, 
-                6, 64, 64
+                5, 64, 64
             ),
             false
         );
@@ -151,25 +169,60 @@ public class Player {
             0.1, 
             AnimationUtils.getSpriteMapAnimationFrameList( 
                 dyingImage, 
-                9, 64, 64
+                8, 64, 64
+            ),
+            false
+        );
+        
+        this.throwingAnimation = new FrameByFrameAnimation<>( 
+            0.05, 
+            AnimationUtils.getSpriteMapAnimationFrameList( 
+                throwingImage, 
+                4, 64, 64
             ),
             false
         );
         
     }
     
+    public void start() {
+        state = State.MOVING;
+        vel.x = RUN_SPEED;
+        running = true;
+    }
+    
+    private boolean throwing;
+    
+    private void throwRock() {
+        TraceLogUtils.traceLogInfo( "throwing!" );
+    }
+    
     public void update( double delta, EngineFrame e ) {
         
-        if ( state == State.IDLE ) {
-            if ( e.isKeyPressed( EngineFrame.KEY_RIGHT ) ) {
-                state = State.RUNNING;
-                vel.x = MOVE_SPEED;
+        if ( e.isKeyDown( EngineFrame.KEY_DOWN ) ) {
+            running = false;
+            vel.x = WALK_SPEED;
+        } else {
+            running = true;
+            vel.x = RUN_SPEED;
+        }
+        
+        if ( e.isKeyPressed( EngineFrame.KEY_CONTROL ) ) {
+            throwingAnimation.reset();
+            throwing = true;
+            throwRock();
+        }
+        
+        if ( throwing ) {
+            throwingAnimation.update( delta );
+            if ( throwingAnimation.getState() == AnimationExecutionState.FINISHED ) {
+                throwing = false;
             }
         }
         
         if ( state != State.DYING ) {
             
-            if ( e.isKeyPressed( EngineFrame.KEY_SPACE ) && remainingJumps > 0 && ( state == State.RUNNING || state == State.JUMPING ) ) {
+            if ( e.isKeyPressed( EngineFrame.KEY_SPACE ) && remainingJumps > 0 && ( state == State.MOVING || state == State.JUMPING ) ) {
                 vel.y = -JUMP_SPEED;
                 remainingJumps--;
                 state = State.JUMPING;
@@ -179,14 +232,14 @@ public class Player {
             }
 
             /*if ( MathUtils.getRandomValue( 0, 400 ) > 390 ) {
-                if ( remainingJumps > 0 && ( state == State.RUNNING || state == State.JUMPING ) ) {
+                if ( remainingJumps > 0 && ( state == State.MOVING || state == State.JUMPING ) ) {
                     vel.y = -JUMP_SPEED;
                     remainingJumps--;
                     state = State.JUMPING;
                 }
             }*/
 
-            if ( state == State.RUNNING || state == State.JUMPING ) {
+            if ( state == State.MOVING || state == State.JUMPING ) {
                 pos.x += vel.x * delta;
             }
 
@@ -205,9 +258,13 @@ public class Player {
             case IDLE:
                 idleAnimation.update( delta );
                 break;
-            case RUNNING:
-                runningAnimation.update( delta );
-                runDustAnimation.update( delta );
+            case MOVING:
+                if ( running ) {
+                    runningAnimation.update( delta );
+                    runDustAnimation.update( delta );
+                } else {
+                    walkingAnimation.update( delta );
+                }
                 break;
             case JUMPING:
                 jumpingAnimation.update( delta );
@@ -220,7 +277,7 @@ public class Player {
                 break;
         }
         
-        updateCPs();
+        updateCP();
         
     }
     
@@ -231,18 +288,38 @@ public class Player {
             case IDLE:
                 idleAnimation.getCurrentFrame().draw( e, pos.x, pos.y );
                 break;
-            case RUNNING:
-                runDustAnimation.getCurrentFrame().draw( e, pos.x, pos.y );
-                runningAnimation.getCurrentFrame().draw( e, pos.x, pos.y );
+            case MOVING:
+                if ( running ) {
+                    runDustAnimation.getCurrentFrame().draw( e, pos.x, pos.y );
+                    if ( throwing ) {
+                        throwingAnimation.getCurrentFrame().draw( e, pos.x, pos.y );
+                    } else {
+                        runningAnimation.getCurrentFrame().draw( e, pos.x, pos.y );
+                    }
+                } else {
+                    if ( throwing ) {
+                        throwingAnimation.getCurrentFrame().draw( e, pos.x, pos.y );
+                    } else {
+                        walkingAnimation.getCurrentFrame().draw( e, pos.x, pos.y );
+                    }
+                }
                 break;
             case JUMPING:
                 if ( remainingJumps == 0 ) {
-                    doubleJumpDustAnimation.getCurrentFrame().draw( e, pos.x, pos.y + 10 );
+                    if ( doubleJumpDustAnimation.getState() != AnimationExecutionState.FINISHED ) {
+                        doubleJumpDustAnimation.getCurrentFrame().draw( e, pos.x, pos.y + 10 );
+                    }
                 }
-                jumpingAnimation.getCurrentFrame().draw( e, pos.x, pos.y );
+                if ( throwing ) {
+                    throwingAnimation.getCurrentFrame().draw( e, pos.x, pos.y );
+                } else {
+                    jumpingAnimation.getCurrentFrame().draw( e, pos.x, pos.y );
+                }
                 break;
             case DYING:
-                dyingAnimation.getCurrentFrame().draw( e, pos.x, pos.y );
+                if ( dyingAnimation.getState() != AnimationExecutionState.FINISHED ) {
+                    dyingAnimation.getCurrentFrame().draw( e, pos.x, pos.y );
+                }
                 break;
         }
         
@@ -252,7 +329,7 @@ public class Player {
         
     }
     
-    public void updateCPs() {
+    public void updateCP() {
         cpLeft.x = pos.x + 15;
         cpLeft.y = pos.y + dim.y / 2 - cpLeft.height / 2;
         cpRight.x = pos.x + dim.x - cpRight.width - 12;
@@ -295,19 +372,21 @@ public class Player {
             
             if ( t != null ) {
 
-                if ( lastReachedTerrain < t.id && 
-                    pos.x + dim.x >= t.pos.x ) {
-                    lastReachedTerrain = t.id;
+                if ( lastReachedTerrain < t.getId() && 
+                    pos.x + dim.x >= t.getPos().x ) {
+                    lastReachedTerrain = t.getId();
                 }
                 
-                if ( t.enemy != null && t.enemy.state == Enemy.State.ACTIVE && state != State.DYING ) {
-                    switch ( checkCollisionEnemy( t.enemy ) ) {
+                if ( t.getEnemy() != null && t.getEnemy().getState() == Enemy.State.ACTIVE && state != State.DYING ) {
+                    switch ( checkCollisionEnemy( t.getEnemy() ) ) {
                         case BOTTOM:
-                            pos.y = t.enemy.pos.y - dim.y;
+                            pos.y = t.getEnemy().getPos().y - dim.y;
                             vel.y = -JUMP_SPEED;
                             state = State.JUMPING;
-                            remainingJumps = 2;
-                            t.enemy.state = Enemy.State.DYING;
+                            if ( remainingJumps < 2 ) {
+                                remainingJumps = 2;
+                            }
+                            t.getEnemy().setState( Enemy.State.DYING );
                             break;
                         case LEFT:
                             state = State.DYING;
@@ -316,34 +395,31 @@ public class Player {
                             state = State.DYING;
                             break;
                     }
-                    updateCPs();
+                    updateCP();
                 }
                 
                 switch ( checkCollisionTerrain( t ) ) {
                     case BOTTOM:
-                        pos.y = t.pos.y - dim.y;
+                        pos.y = t.getPos().y - dim.y;
                         vel.y = 0;
                         if ( state == State.JUMPING ) {
-                            state = State.RUNNING;
+                            state = State.MOVING;
                         }
                         remainingJumps = 2;
-                        t.makeReached();
                         break;
                     case LEFT:
                         vel.x = 0;
-                        pos.x = t.pos.x + t.dim.x;
-                        t.makeReached();
+                        pos.x = t.getPos().x + t.getDim().x;
                         state = State.DYING;
                         break;
                     case RIGHT:
                         vel.x = 0;
-                        pos.x = t.pos.x - dim.x;
-                        t.makeReached();
+                        pos.x = t.getPos().x - dim.x;
                         state = State.DYING;
                         break;
                 }
                 
-                updateCPs();
+                updateCP();
                 
             }
             
@@ -353,6 +429,30 @@ public class Player {
 
     public int getLastReachedTerrain() {
         return lastReachedTerrain;
+    }
+
+    public Vector2 getPos() {
+        return pos;
+    }
+
+    public Vector2 getDim() {
+        return dim;
+    }
+
+    public Vector2 getVel() {
+        return vel;
+    }
+
+    public State getState() {
+        return state;
+    }
+
+    public void setState( State state ) {
+        this.state = state;
+    }
+
+    public boolean isRunning() {
+        return running;
     }
     
 }
