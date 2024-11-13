@@ -199,7 +199,7 @@ public class Player {
     
     public void update( double delta, EngineFrame e ) {
         
-        if ( e.isKeyDown( EngineFrame.KEY_DOWN ) ) {
+        if ( e.isKeyDown( EngineFrame.KEY_DOWN ) || e.isGamepadButtonDown( e.GAMEPAD_1, e.GAMEPAD_BUTTON_LEFT_FACE_DOWN ) ) {
             running = false;
             vel.x = WALK_SPEED;
         } else {
@@ -207,7 +207,7 @@ public class Player {
             vel.x = RUN_SPEED;
         }
         
-        if ( e.isKeyPressed( EngineFrame.KEY_CONTROL ) ) {
+        if ( e.isKeyPressed( EngineFrame.KEY_CONTROL ) || e.isGamepadButtonDown( e.GAMEPAD_1, e.GAMEPAD_BUTTON_RIGHT_FACE_LEFT ) ) {
             throwingAnimation.reset();
             throwing = true;
             throwRock();
@@ -222,7 +222,7 @@ public class Player {
         
         if ( state != State.DYING ) {
             
-            if ( e.isKeyPressed( EngineFrame.KEY_SPACE ) && remainingJumps > 0 && ( state == State.MOVING || state == State.JUMPING ) ) {
+            if ( ( e.isKeyPressed( EngineFrame.KEY_SPACE ) || e.isGamepadButtonPressed( e.GAMEPAD_1, e.GAMEPAD_BUTTON_RIGHT_FACE_DOWN ) ) && remainingJumps > 0 && ( state == State.MOVING || state == State.JUMPING ) ) {
                 vel.y = -JUMP_SPEED;
                 remainingJumps--;
                 state = State.JUMPING;

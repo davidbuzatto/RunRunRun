@@ -131,11 +131,11 @@ public class GameWorld extends EngineFrame {
     public void update( double delta ) {
         
         if ( player.getState() == Player.State.IDLE ) {
-            if ( isKeyPressed( KEY_ENTER ) ) {
+            if ( isKeyPressed( KEY_ENTER ) || isGamepadButtonPressed( GAMEPAD_1, GAMEPAD_BUTTON_MIDDLE_RIGHT ) ) {
                 player.start();
             }
         } else if ( player.getState() == Player.State.DYING ) {
-            if ( isKeyPressed( KEY_ENTER ) ) {
+            if ( isKeyPressed( KEY_ENTER ) || isGamepadButtonPressed( GAMEPAD_1, GAMEPAD_BUTTON_MIDDLE_RIGHT ) ) {
                 prepare();
             }
         }
@@ -184,7 +184,7 @@ public class GameWorld extends EngineFrame {
             String text = "YOU DIED!";
             drawText( text, getScreenWidth() / 2 - measureText( text, fontSize ) / 2, getScreenHeight() / 2 - 30, fontSize, RED );
             fontSize = 20;
-            text = "Press <ENTER> to play again!";
+            text = "Press <ENTER> or <START> to play again!";
             drawText( text, getScreenWidth() / 2 - measureText( text, fontSize ) / 2, getScreenHeight() / 2 + 30, fontSize, RED );
         }
         
