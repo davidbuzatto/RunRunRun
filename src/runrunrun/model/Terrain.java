@@ -27,11 +27,12 @@ public class Terrain {
     private int columns;
     private int lines;
     
-    private static final Image tile0 = ImageUtils.loadImage( "resources/images/tiles/tile0.png" );
-    private static final Image tile1 = ImageUtils.loadImage( "resources/images/tiles/tile1.png" );
-    private static final Image tile2 = ImageUtils.loadImage( "resources/images/tiles/tile2.png" );
-    private static final Image tile3 = ImageUtils.loadImage( "resources/images/tiles/tile3.png" );
-    private static final Image tile4 = ImageUtils.loadImage( "resources/images/tiles/tile4.png" );
+    private static final Image tile0 = ImageUtils.loadImage( "resources/images/tiles/grass/tile0.png" );
+    private static final Image tile1 = ImageUtils.loadImage( "resources/images/tiles/grass/tile1.png" );
+    private static final Image tile2 = ImageUtils.loadImage( "resources/images/tiles/grass/tile2.png" );
+    private static final Image tile3 = ImageUtils.loadImage( "resources/images/tiles/grass/tile3.png" );
+    private static final Image tile4 = ImageUtils.loadImage( "resources/images/tiles/grass/tile4.png" );
+    private static final Image tile5 = ImageUtils.loadImage( "resources/images/tiles/grass/tile5.png" );
     
     private Enemy enemy;
 
@@ -66,7 +67,7 @@ public class Terrain {
     
     public void draw( EngineFrame e ) {
         
-        e.fillRectangle( pos.x, pos.y, dim.x, dim.y, paint );
+        //e.fillRectangle( pos.x, pos.y, dim.x, dim.y, paint );
         
         for ( int i = 0; i < lines; i++ ) {
             if ( i == 0 ) {
@@ -84,6 +85,8 @@ public class Terrain {
                     if ( j == 0 ) {
                         e.drawImage( tile3, pos.x + j * 64, pos.y + i * 64 );
                     } else if ( j == columns - 1 ) {
+                        e.drawImage( tile5, pos.x + j * 64, pos.y + i * 64 );
+                    } else {
                         e.drawImage( tile4, pos.x + j * 64, pos.y + i * 64 );
                     }
                 }

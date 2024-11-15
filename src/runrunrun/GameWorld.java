@@ -120,7 +120,7 @@ public class GameWorld extends EngineFrame {
         Terrain.resetIdCount();
         lastReachedTerrain = 0;
         end = -1;
-        terrainColor = new Color( 56, 0, 44 );
+        terrainColor = BLACK;
         createTerrains( 10, terrainY );
         
         parallax = new Parallax();
