@@ -91,6 +91,7 @@ public class GameWorld extends EngineFrame {
     @Override
     public void create() {
         
+        setDefaultFontSize( 20 );
         terrainY = getScreenHeight() - 100;
         bgColor = new Color( 127, 126, 196 );
         
@@ -176,6 +177,8 @@ public class GameWorld extends EngineFrame {
         player.draw( this );
         
         endMode2D();
+        
+        player.drawHud( this );
         
         if ( player.getState() == Player.State.DYING ) {
             fillRectangle( 0, 0, getScreenWidth(), getScreenHeight(), ColorUtils.fade( BLACK, 0.4 ) );

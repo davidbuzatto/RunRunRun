@@ -13,7 +13,7 @@ import runrunrun.GameWorld;
  * 
  * @author Prof. Dr. David Buzatto
  */
-public class Terrain {
+public class Terrain extends Entity {
     
     private static int idCount = 0;
     

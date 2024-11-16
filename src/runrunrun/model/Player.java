@@ -6,13 +6,14 @@ import br.com.davidbuzatto.jsge.animation.frame.FrameByFrameAnimation;
 import br.com.davidbuzatto.jsge.animation.frame.SpriteMapAnimationFrame;
 import br.com.davidbuzatto.jsge.collision.CollisionUtils;
 import br.com.davidbuzatto.jsge.core.engine.EngineFrame;
-import br.com.davidbuzatto.jsge.core.utils.TraceLogUtils;
 import br.com.davidbuzatto.jsge.geom.Rectangle;
 import br.com.davidbuzatto.jsge.image.Image;
 import br.com.davidbuzatto.jsge.image.ImageUtils;
 import br.com.davidbuzatto.jsge.math.Vector2;
 import java.awt.Color;
 import java.awt.Paint;
+import java.util.ArrayList;
+import java.util.List;
 import runrunrun.GameWorld;
 
 /**
@@ -20,7 +21,7 @@ import runrunrun.GameWorld;
  * 
  * @author Prof. Dr. David Buzatto
  */
-public class Player {
+public class Player extends Entity {
     
     private Vector2 pos;
     private Vector2 dim;
@@ -29,7 +30,14 @@ public class Player {
     
     private State state;
     private boolean running;
+    
     private int remainingJumps;
+    private int rocks;
+    private int hp;
+    private int maxHp;
+    private double invincibleTime;
+    private double invincibleCounter;
+    private boolean invincible;
     
     private static final double RUN_SPEED = 400;
     private static final double WALK_SPEED = 200;
@@ -50,6 +58,12 @@ public class Player {
     private FrameByFrameAnimation<SpriteMapAnimationFrame> doubleJumpDustAnimation;
     private FrameByFrameAnimation<SpriteMapAnimationFrame> dyingAnimation;
     private FrameByFrameAnimation<SpriteMapAnimationFrame> throwingAnimation;
+    
+    private Image emptyHeart;
+    private Image fullHeart;
+    private Image rock;
+    private List<Rock> activeRocks;
+    private List<Rock> rocksToRemove;
     
     private static enum CollisionType {
         LEFT,
@@ -79,6 +93,17 @@ public class Player {
         this.cpBottom = new Rectangle( 0, 0, 10, 10 );
         
         this.remainingJumps = 2;
+        this.rocks = 20;
+        this.hp = 5;
+        this.maxHp = 5;
+        this.invincibleTime = 1;
+        
+        this.activeRocks = new ArrayList<>();
+        this.rocksToRemove = new ArrayList<>();
+        
+        this.emptyHeart = ImageUtils.loadImage( "resources/images/hud/emptyHeart.png" );
+        this.fullHeart = ImageUtils.loadImage( "resources/images/hud/fullHeart.png" );
+        this.rock = ImageUtils.loadImage( "resources/images/hud/rock.png" );
         
         Image idleImage = ImageUtils.loadImage( "resources/images/sprites/playerIdle.png" );
         Image runningImage = ImageUtils.loadImage( "resources/images/sprites/playerRunning.png" );
@@ -194,7 +219,12 @@ public class Player {
     private boolean throwing;
     
     private void throwRock() {
-        TraceLogUtils.traceLogInfo( "throwing!" );
+        
+        if ( rocks > 0 ) {
+            rocks--;
+            activeRocks.add( new Rock( new Vector2( pos.x, pos.y + 25 ), new Vector2( vel.x + 400, 0 ) ) );
+        }
+        
     }
     
     public void update( double delta, EngineFrame e ) {
@@ -207,7 +237,7 @@ public class Player {
             vel.x = RUN_SPEED;
         }
         
-        if ( e.isKeyPressed( EngineFrame.KEY_CONTROL ) || e.isGamepadButtonDown( e.GAMEPAD_1, e.GAMEPAD_BUTTON_RIGHT_FACE_LEFT ) ) {
+        if ( ( e.isKeyPressed( EngineFrame.KEY_CONTROL ) || e.isGamepadButtonDown( e.GAMEPAD_1, e.GAMEPAD_BUTTON_RIGHT_FACE_LEFT ) ) && !throwing && rocks != 0 ) {
             throwingAnimation.reset();
             throwing = true;
             throwRock();
@@ -244,13 +274,39 @@ public class Player {
             }
 
             pos.y += vel.y * delta;
-
             vel.y += GameWorld.GRAVITY;
 
             if ( vel.y > MAX_FALL_SPEED ) {
                 vel.y = MAX_FALL_SPEED;
             }
             
+            for ( Rock r : activeRocks ) {
+                r.update( delta );
+                if ( !r.isActive() ) {
+                    rocksToRemove.add( r );
+                }
+            }
+            
+            for ( Rock r : rocksToRemove ) {
+                activeRocks.remove( r );
+            }
+            
+            if ( !rocksToRemove.isEmpty() ) {
+                rocksToRemove.clear();
+            }
+            
+        }
+        
+        if ( invincible ) {
+            invincibleCounter += delta;
+            if ( invincibleCounter >= invincibleTime ) {
+                invincible = false;
+                invincibleCounter = 0;
+            }
+        }
+        
+        if ( hp == 0 ) {
+            state = State.DYING;
         }
         
         switch ( state ) {
@@ -323,9 +379,28 @@ public class Player {
                 break;
         }
         
+        for ( Rock r : activeRocks ) {
+            r.draw( e );
+        }
+        
         /*cpLeft.fill( e, e.LIME );
         cpRight.fill( e, e.LIME );
         cpBottom.fill( e, e.LIME );*/
+        
+    }
+    
+    public void drawHud( EngineFrame e ) {
+        
+        for ( int i = 0; i < maxHp; i++ ) {
+            if ( i < hp ) {
+                e.drawImage( fullHeart, 10 + i * fullHeart.getWidth(), 10 ); 
+            } else {
+                e.drawImage( emptyHeart, 10 + i * fullHeart.getWidth(), 10 ); 
+            }
+        }
+        
+        e.drawImage( rock, 15, 53 );
+        e.drawText( String.format( "x %d", rocks ), 25 + rock.getWidth(), 53, EngineFrame.WHITE );
         
     }
     
@@ -389,10 +464,16 @@ public class Player {
                             t.getEnemy().setState( Enemy.State.DYING );
                             break;
                         case LEFT:
-                            state = State.DYING;
+                            if ( !invincible ) {
+                                invincible = true;
+                                hp--;
+                            }
                             break;
                         case RIGHT:
-                            state = State.DYING;
+                            if ( !invincible ) {
+                                invincible = true;
+                                hp--;
+                            }
                             break;
                     }
                     updateCP();

@@ -19,7 +19,7 @@ import runrunrun.GameWorld;
  * 
  * @author Prof. Dr. David Buzatto
  */
-public class Enemy {
+public class Enemy extends Entity {
     
     private Vector2 pos;
     private Vector2 dim;
